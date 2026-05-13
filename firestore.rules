@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Anyone can read products
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true; // Admin only
+    }
+    
+    // Users can only access their own user document, wishlist, and orders
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /wishlist/{productId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /cart/{productId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /notifications/{notificationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    match /orders/{orderId} {
+      // Assuming 'userId' is a field on your order document
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}

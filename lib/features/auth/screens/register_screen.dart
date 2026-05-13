@@ -20,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final confirmPassController = TextEditingController();
 
   final AuthService _auth = AuthService();
-  final FirestoreService _firestore = FirestoreService();
+  final FirebaseService _firestore = FirebaseService();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -156,7 +156,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   controller: firstNameController,
                                   label: 'First name',
                                   icon: Icons.person_outline,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -165,7 +166,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   controller: lastNameController,
                                   label: 'Last name',
                                   icon: Icons.person_outline,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ),
                             ],
@@ -191,48 +193,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: passwordController,
                             label: 'Password',
                             obscure: _obscurePassword,
-                            onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
-                            validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
+                            onToggle: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                            validator: (v) =>
+                                v!.length < 6 ? 'Min 6 characters' : null,
                           ),
                           const SizedBox(height: 16),
                           _buildPasswordField(
                             controller: confirmPassController,
                             label: 'Confirm Password',
                             obscure: _obscureConfirm,
-                            onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                            validator: (v) => v != passwordController.text ? 'Passwords do not match' : null,
+                            onToggle: () => setState(
+                              () => _obscureConfirm = !_obscureConfirm,
+                            ),
+                            validator: (v) => v != passwordController.text
+                                ? 'Passwords do not match'
+                                : null,
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               Checkbox(
                                 value: _agreedToTerms,
-                                onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                                onChanged: (v) =>
+                                    setState(() => _agreedToTerms = v ?? false),
                                 activeColor: const Color(0xFFFF5F6D),
                               ),
                               const Expanded(
-                                child: Text('I agree to the Terms & Privacy Policy', style: TextStyle(fontSize: 13)),
+                                child: Text(
+                                  'I agree to the Terms & Privacy Policy',
+                                  style: TextStyle(fontSize: 13),
+                                ),
                               ),
                             ],
                           ),
                           if (_errorMessage.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text(_errorMessage, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                              child: Text(
+                                _errorMessage,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: _isLoading
-                                ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF5F6D)))
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFFF5F6D),
+                                    ),
+                                  )
                                 : ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFFF5F6D),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                     onPressed: _register,
-                                    child: const Text('Register', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                    child: const Text(
+                                      'Register',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                           ),
                           const SizedBox(height: 16),
@@ -242,8 +274,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: const Text.rich(
                                 TextSpan(
                                   children: [
-                                    TextSpan(text: "Already have an account? ", style: TextStyle(color: Colors.black54)),
-                                    TextSpan(text: 'Login', style: TextStyle(color: Color(0xFFFF5F6D), fontWeight: FontWeight.bold)),
+                                    TextSpan(
+                                      text: "Already have an account? ",
+                                      style: TextStyle(color: Colors.black54),
+                                    ),
+                                    TextSpan(
+                                      text: 'Login',
+                                      style: TextStyle(
+                                        color: Color(0xFFFF5F6D),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -281,7 +322,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFFF5F6D)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -299,9 +343,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline, size: 20, color: Colors.grey),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          size: 20,
+          color: Colors.grey,
+        ),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20, color: Colors.grey),
+          icon: Icon(
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            size: 20,
+            color: Colors.grey,
+          ),
           onPressed: onToggle,
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

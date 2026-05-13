@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../services/firebase_service.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final Map product;
@@ -9,17 +9,37 @@ class ProductDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firebaseService = FirebaseService();
+    // Default fallback if fields are missing
+    final String productId =
+        product['id'] ??
+        product['name'] ??
+        DateTime.now().millisecondsSinceEpoch.toString();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(
+        0xFF0F0F14,
+      ), // Coral-Orange premium dark theme
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {}, // Optional: Wishlist logic
+          StreamBuilder<List<String>>(
+            stream: firebaseService.getWishlistIds(),
+            builder: (context, snapshot) {
+              final wishlist = snapshot.data ?? [];
+              final isWishlisted = wishlist.contains(productId);
+              return IconButton(
+                icon: Icon(
+                  isWishlisted ? Icons.favorite : Icons.favorite_border,
+                  color: isWishlisted ? const Color(0xFFFF4D6D) : Colors.white,
+                ),
+                onPressed: () =>
+                    firebaseService.toggleWishlist(productId, isWishlisted),
+              );
+            },
           ),
         ],
       ),
@@ -35,7 +55,9 @@ class ProductDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: NetworkImage(product['image']),
+                        image: NetworkImage(
+                          product['image'] ?? product['imageUrl'] ?? '',
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -46,11 +68,13 @@ class ProductDetailsScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
-                      end: Alignment.center,
+                      end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.4),
+                        Colors.black.withOpacity(0.6),
                         Colors.transparent,
+                        const Color(0xFF0F0F14).withOpacity(0.9),
                       ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                   ),
                 ),
@@ -60,10 +84,10 @@ class ProductDetailsScreen extends StatelessWidget {
 
           // 📄 Product Information Sheet
           Container(
-            transform: Matrix4.translationValues(0.0, -30.0, 0.0),
+            transform: Matrix4.translationValues(0.0, -20.0, 0.0),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             decoration: const BoxDecoration(
-              color: Color(0xFFF8F9FA),
+              color: Color(0xFF1E1E26), // Surface dark
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(40),
                 topRight: Radius.circular(40),
@@ -77,45 +101,50 @@ class ProductDetailsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        product['name'],
-                        style: const TextStyle(
+                        product['name'] ?? 'Unknown',
+                        style: GoogleFonts.syne(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                     Text(
-                      "Rs. ${product['price']}",
-                      style: const TextStyle(
+                      "\$${product['price']}",
+                      style: GoogleFonts.syne(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFFFF5F6D),
+                        color: const Color(0xFFFF4D6D), // Coral red
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 15),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.star, color: Colors.amber, size: 20),
-                    SizedBox(width: 5),
+                    const Icon(Icons.star, color: Colors.amber, size: 20),
+                    const SizedBox(width: 5),
                     Text(
                       "4.8 (120 Reviews)",
-                      style: TextStyle(color: Colors.grey),
+                      style: GoogleFonts.dmSans(color: Colors.white70),
                     ),
                   ],
                 ),
                 const SizedBox(height: 25),
-                const Text(
+                Text(
                   "Description",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.syne(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   "Crafted with premium materials, this item from SmartShop blends style and durability. Perfect for daily use or special occasions.",
-                  style: TextStyle(
-                    color: Colors.black54,
+                  style: GoogleFonts.dmSans(
+                    color: Colors.white70,
                     height: 1.5,
                     fontSize: 15,
                   ),
@@ -128,54 +157,76 @@ class ProductDetailsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFF2A2A35),
                         borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: Colors.white10),
                       ),
                       child: const Icon(
                         Icons.share_outlined,
-                        color: Colors.grey,
+                        color: Colors.white70,
                       ),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF5F6D),
+                          backgroundColor: const Color(0xFFFF4D6D),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          elevation: 0,
+                          elevation: 10,
+                          shadowColor: const Color(0xFFFF4D6D).withOpacity(0.5),
                         ),
                         onPressed: () async {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user != null) {
-                            await FirebaseFirestore.instance
-                                .collection('cart')
-                                .add({
-                                  'userId': user.uid,
-                                  'name': product['name'],
-                                  'price': product['price'],
-                                  'image': product['image'],
-                                });
+                          try {
+                            // Safely parse price just in case it was passed as a String from the UI Map
+                            final parsedPrice =
+                                double.tryParse(product['price'].toString()) ??
+                                0.0;
+
+                            await firebaseService.addToCart(
+                              productId,
+                              product['name'] ?? 'Item',
+                              parsedPrice,
+                              product['image'] ?? product['imageUrl'],
+                            );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   behavior: SnackBarBehavior.floating,
-                                  backgroundColor: const Color(0xFFFF5F6D),
-                                  content: Text(
-                                    "${product['name']} added to cart!",
+                                  backgroundColor: const Color(0xFF1E1E26),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  content: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFFFF4D6D),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          "${product['name']} added to cart!",
+                                          style: GoogleFonts.dmSans(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );
                             }
+                          } catch (e) {
+                            debugPrint("Cart Error: $e");
                           }
                         },
-                        child: const Text(
+                        child: Text(
                           "Add to Cart",
-                          style: TextStyle(
+                          style: GoogleFonts.syne(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),

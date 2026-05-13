@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // Remove the main.dart import as it's not needed here
 import 'features/auth/screens/login_screen.dart';
-import 'features/home/home_screen.dart'; // Import the screen you just checked
+import 'features/navigation/main_wrapper.dart'; // Import the new main navigation wrapper
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -17,9 +17,9 @@ class AuthGate extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // ✅ FIX: Return HomeScreen instead of MyApp
+          // ✅ FIX: Return MainNavigationWrapper instead of HomeScreen
           if (snapshot.hasData) {
-            return HomeScreen();
+            return const MainNavigationWrapper();
           } else {
             return LoginScreen();
           }

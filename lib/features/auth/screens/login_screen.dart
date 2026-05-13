@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               TextSpan(
                 text: "Don't have an account? ",
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: Color.fromARGB(242, 246, 245, 245)),
               ),
               TextSpan(
                 text: 'Register',
