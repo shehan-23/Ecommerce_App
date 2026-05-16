@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../home/screens/dynamic_home_screen.dart'; // import the new dark theme home screen
 import '../wishlist/screens/wishlist_screen.dart';
 import '../orders/screens/order_screen.dart';

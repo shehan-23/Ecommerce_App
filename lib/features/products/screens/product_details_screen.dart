@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../services/firebase_service.dart';
+import '../../../models/product.dart'; // ✨ Added import ✨
+import 'size_recommender_sheet.dart'; 
 
 class ProductDetailsScreen extends StatelessWidget {
-  final Map product;
+  // ✨ FIX: Change type from Map to Product ✨
+  final Product product;
 
   const ProductDetailsScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
     final firebaseService = FirebaseService();
-    // Default fallback if fields are missing
-    final String productId =
-        product['id'] ??
-        product['name'] ??
-        DateTime.now().millisecondsSinceEpoch.toString();
 
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF0F0F14,
-      ), // Coral-Orange premium dark theme
+      backgroundColor: const Color(0xFF0F0F14), 
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -30,14 +26,15 @@ class ProductDetailsScreen extends StatelessWidget {
             stream: firebaseService.getWishlistIds(),
             builder: (context, snapshot) {
               final wishlist = snapshot.data ?? [];
-              final isWishlisted = wishlist.contains(productId);
+              // ✨ FIX: Access property directly from Product model ✨
+              final isWishlisted = wishlist.contains(product.id);
               return IconButton(
                 icon: Icon(
                   isWishlisted ? Icons.favorite : Icons.favorite_border,
                   color: isWishlisted ? const Color(0xFFFF4D6D) : Colors.white,
                 ),
                 onPressed: () =>
-                    firebaseService.toggleWishlist(productId, isWishlisted),
+                    firebaseService.toggleWishlist(product.id, isWishlisted),
               );
             },
           ),
@@ -45,25 +42,23 @@ class ProductDetailsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // 🎨 Immersive Product Image with Gradient Overlay
           Expanded(
             child: Stack(
               children: [
                 Hero(
-                  tag: 'product-${product['name']}',
+                  tag: 'product-${product.name}',
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                          product['image'] ?? product['imageUrl'] ?? '',
+                          product.imageUrl ?? '',
                         ),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
-                // Soft gradient overlay to make back button visible
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -82,12 +77,11 @@ class ProductDetailsScreen extends StatelessWidget {
             ),
           ),
 
-          // 📄 Product Information Sheet
           Container(
             transform: Matrix4.translationValues(0.0, -20.0, 0.0),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             decoration: const BoxDecoration(
-              color: Color(0xFF1E1E26), // Surface dark
+              color: Color(0xFF1E1E26), 
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(40),
                 topRight: Radius.circular(40),
@@ -101,7 +95,7 @@ class ProductDetailsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        product['name'] ?? 'Unknown',
+                        product.name,
                         style: GoogleFonts.syne(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -111,11 +105,11 @@ class ProductDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "\$${product['price']}",
+                      "Rs. ${product.price.toStringAsFixed(0)}",
                       style: GoogleFonts.syne(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFFF4D6D), // Coral red
+                        color: const Color(0xFFFF4D6D), 
                       ),
                     ),
                   ],
@@ -142,14 +136,88 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Crafted with premium materials, this item from SmartShop blends style and durability. Perfect for daily use or special occasions.",
+                  "Crafted with premium materials, this item from Fitkarma blends style and durability. Perfect for daily use or special occasions.",
                   style: GoogleFonts.dmSans(
                     color: Colors.white70,
                     height: 1.5,
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
+
+                // ✨ AI Smart Size Recommender UI ✨
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF4D6D).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFFF4D6D).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: Color(0xFFFF4D6D),
+                        size: 28,
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Smart Size Engine",
+                              style: GoogleFonts.syne(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Find your perfect fit instantly.",
+                              style: GoogleFonts.dmSans(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true, 
+                            backgroundColor: Colors.transparent, 
+                            builder: (context) => SizeRecommenderSheet(
+                              productName: product.name,
+                              sizeMatrix: product.sizeMatrix, // ✨ Uses model property ✨
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4D6D),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: Text(
+                          "Find Size",
+                          style: GoogleFonts.syne(fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
 
                 // 🛒 Action Button Section
                 Row(
@@ -181,16 +249,11 @@ class ProductDetailsScreen extends StatelessWidget {
                         ),
                         onPressed: () async {
                           try {
-                            // Safely parse price just in case it was passed as a String from the UI Map
-                            final parsedPrice =
-                                double.tryParse(product['price'].toString()) ??
-                                0.0;
-
                             await firebaseService.addToCart(
-                              productId,
-                              product['name'] ?? 'Item',
-                              parsedPrice,
-                              product['image'] ?? product['imageUrl'],
+                              product.id,
+                              product.name,
+                              product.price,
+                              product.imageUrl,
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -209,7 +272,7 @@ class ProductDetailsScreen extends StatelessWidget {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          "${product['name']} added to cart!",
+                                          "${product.name} added to cart!",
                                           style: GoogleFonts.dmSans(
                                             color: Colors.white,
                                           ),

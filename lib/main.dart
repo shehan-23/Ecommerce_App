@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartShop',
+      title: 'FitKarma',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -58,6 +58,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
+      // ✨ Restored to boot into your Splash Screen ✨
       home: const SplashScreen(),
     );
   }

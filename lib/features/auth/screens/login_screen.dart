@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../services/firebase_service.dart';
 import '../auth_service.dart';
-import 'package:smartshop/features/auth/screens/register_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user == null) {
         setState(() => _errorMessage = 'Invalid email or password.');
       }
-      // AuthGate handles navigation automatically on success
     } catch (e) {
       setState(() => _errorMessage = e.toString());
     } finally {
@@ -54,273 +55,112 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFF5F6D), Color(0xFFFF8A65)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 450,
-              ), // Standard "Box" width for Web
+      backgroundColor: const Color(0xFF0F0F14),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Form(
+              key: _formKey,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // --- Friendly Icon Header ---
-                  _buildHeader(),
-                  const SizedBox(height: 20),
-
-                  // --- The Login Card (The Box) ---
-                  Card(
-                    elevation: 10,
-                    shadowColor: Colors.black38,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF4D6D).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        )
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 32,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Sign In",
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFF5F6D),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "Access your Fashion Store account",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Email Field
-                            _buildField(
-                              controller: emailController,
-                              label: 'Email address',
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return 'Required';
-                                if (!v.contains('@')) {
-                                  return 'Enter valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 18),
-
-                            // Password Field
-                            _buildPasswordField(),
-
-                            _buildForgotPassword(),
-
-                            if (_errorMessage.isNotEmpty)
-                              _buildErrorContainer(),
-
-                            const SizedBox(height: 12),
-
-                            // Sign In Button
-                            _buildSignInButton(),
-
-                            const SizedBox(height: 24),
-                            _buildDivider(),
-                            const SizedBox(height: 24),
-
-                            const SizedBox(height: 20),
-                            _buildRegisterLink(),
-                          ],
+                    child: const Icon(
+                      Icons.shopping_bag_outlined,
+                      size: 45,
+                      color: Color(0xFFFF4D6D),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'FITKARMA',
+                    style: GoogleFonts.syne(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800, // ✨ FIXED: Used w800 instead of extrabold
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign in to your premium account',
+                    style: GoogleFonts.dmSans(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _buildField(
+                    controller: emailController,
+                    label: 'Email Address',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildPasswordField(),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'Forgot password?',
+                        style: GoogleFonts.dmSans(
+                          color: const Color(0xFFFF4D6D),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
+                  if (_errorMessage.isNotEmpty) _buildErrorContainer(),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                                color: Color(0xFFFF4D6D)),
+                          )
+                        : ElevatedButton(
+                            onPressed: _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF4D6D),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              elevation: 5,
+                              shadowColor: const Color(0xFFFF4D6D).withOpacity(0.4),
+                            ),
+                            child: Text(
+                              'SIGN IN',
+                              style: GoogleFonts.syne(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildRegisterLink(),
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- UI Component Helper Methods ---
-
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.shopping_bag_outlined,
-            size: 40,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'SmartShop',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return TextFormField(
-      controller: passwordController,
-      obscureText: _obscurePassword,
-      validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
-      decoration: InputDecoration(
-        labelText: 'Password',
-        prefixIcon: const Icon(
-          Icons.lock_outline,
-          size: 20,
-          color: Colors.grey,
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-      ),
-    );
-  }
-
-  Widget _buildForgotPassword() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () {},
-        child: const Text(
-          'Forgot password?',
-          style: TextStyle(color: Color(0xFFFF5F6D), fontSize: 13),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorContainer() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.shade200),
-      ),
-      child: Text(
-        _errorMessage,
-        style: TextStyle(color: Colors.red.shade700, fontSize: 13),
-      ),
-    );
-  }
-
-  Widget _buildSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 55,
-      child: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF5F6D)),
-            )
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF5F6D), Color(0xFFFF8A65)],
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: ElevatedButton(
-                onPressed: _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: const Text(
-                  'Sign In',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return const Row(
-      children: [
-        Expanded(child: Divider(color: Colors.black12)),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('or', style: TextStyle(color: Colors.grey, fontSize: 13)),
-        ),
-        Expanded(child: Divider(color: Colors.black12)),
-      ],
-    );
-  }
-
-  Widget _buildRegisterLink() {
-    return Center(
-      child: TextButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => RegisterScreen()),
-        ),
-        child: const Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: "Don't have an account? ",
-                style: TextStyle(color: Color.fromARGB(242, 246, 245, 245)),
-              ),
-              TextSpan(
-                text: 'Register',
-                style: TextStyle(
-                  color: Color(0xFFFF5F6D),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -332,19 +172,90 @@ class _LoginScreenState extends State<LoginScreen> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      validator: validator,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        labelStyle: const TextStyle(color: Colors.white54),
+        prefixIcon: Icon(icon, color: const Color(0xFFFF4D6D), size: 20),
+        filled: true,
+        fillColor: const Color(0xFF1E1E26),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFFF5F6D)),
+          borderSide: const BorderSide(color: Color(0xFFFF4D6D), width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: passwordController,
+      obscureText: _obscurePassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: 'Password',
+        labelStyle: const TextStyle(color: Colors.white54),
+        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFFF4D6D), size: 20),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            color: Colors.white54,
+            size: 20,
+          ),
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+        filled: true,
+        fillColor: const Color(0xFF1E1E26),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFFFF4D6D), width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorContainer() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Text(
+        _errorMessage,
+        style: GoogleFonts.dmSans(color: Colors.redAccent, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _buildRegisterLink() {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: GoogleFonts.dmSans(color: Colors.white54, fontSize: 14),
+          children: [
+            const TextSpan(text: "Don't have an account? "),
+            TextSpan(
+              text: 'Register',
+              style: TextStyle(
+                color: const Color(0xFFFF4D6D),
+                fontWeight: FontWeight.bold,
+                fontFamily: GoogleFonts.syne().fontFamily,
+              ),
+            ),
+          ],
         ),
       ),
     );

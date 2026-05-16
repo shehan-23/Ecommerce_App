@@ -8,7 +8,7 @@ class FirebaseService {
 
   String? get currentUserUid => _auth.currentUser?.uid;
 
-  // 1. Fetch products with optional category filtering
+  // 1. Product Management
   Stream<List<Product>> getProducts({String category = "All"}) {
     Query query = _firestore.collection('products');
     if (category != "All") {
@@ -25,11 +25,33 @@ class FirebaseService {
     });
   }
 
+  Future<void> addProduct({
+    required String name,
+    required double price,
+    required String imageUrl,
+    required String category,
+    required String vibe,
+    required String targetGender,
+  }) async {
+    await _firestore.collection('products').add({
+      'name': name,
+      'price': price,
+      'imageUrl': imageUrl,
+      'category': category,
+      'vibe': vibe,
+      'targetGender': targetGender,
+      'createdAt': FieldValue.serverTimestamp(),
+      'sizeMatrix': {
+        'S': {'chest': 36, 'length': 27},
+        'M': {'chest': 40, 'length': 28},
+        'L': {'chest': 44, 'length': 29},
+        'XL': {'chest': 48, 'length': 30},
+      }
+    });
+  }
+
   // 2. Wishlist Logic
-  Future<void> toggleWishlist(
-    String productId,
-    bool isCurrentlyWishlisted,
-  ) async {
+  Future<void> toggleWishlist(String productId, bool isCurrentlyWishlisted) async {
     final uid = currentUserUid;
     if (uid == null) return;
 
@@ -52,21 +74,17 @@ class FirebaseService {
   Stream<List<String>> getWishlistIds() {
     final uid = currentUserUid;
     if (uid == null) return Stream.value([]);
-
     return _firestore
         .collection('users')
         .doc(uid)
         .collection('wishlist')
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) => doc.id).toList();
-        });
+        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
   }
 
   Stream<List<Product>> getWishlistedProducts() {
     return getWishlistIds().asyncMap((ids) async {
       if (ids.isEmpty) return [];
-      // Note: `whereIn` accepts up to 10 elements. For production, chunk the requests.
       final docSnaps = await _firestore
           .collection('products')
           .where(FieldPath.documentId, whereIn: ids)
@@ -77,7 +95,7 @@ class FirebaseService {
     });
   }
 
-  // 3. Cart Logic
+  // 3. Cart & Checkout Logic
   Stream<QuerySnapshot> getCartStream() {
     final uid = currentUserUid;
     if (uid == null) return const Stream.empty();
@@ -88,28 +106,15 @@ class FirebaseService {
         .snapshots();
   }
 
-  Future<void> addToCart(
-    String productId,
-    String name,
-    double price,
-    String? imageUrl, {
-    int quantity = 1,
-  }) async {
+  Future<void> addToCart(String productId, String name, double price, String? imageUrl) async {
     final uid = currentUserUid;
     if (uid == null) return;
-
-    final docRef = _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('cart')
-        .doc(productId);
-
-    await docRef.set({
+    await _firestore.collection('users').doc(uid).collection('cart').doc(productId).set({
       'productId': productId,
       'name': name,
       'price': price,
       'imageUrl': imageUrl,
-      'quantity': FieldValue.increment(quantity),
+      'quantity': FieldValue.increment(1),
       'addedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -132,34 +137,20 @@ class FirebaseService {
   }) async {
     final uid = currentUserUid;
     if (uid == null) return;
-
-    final cartSnap = await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('cart')
-        .get();
+    final cartSnap = await _firestore.collection('users').doc(uid).collection('cart').get();
     if (cartSnap.docs.isEmpty) return;
 
-    List<Map<String, dynamic>> items = [];
-
-    for (var doc in cartSnap.docs) {
-      final data = doc.data();
-      items.add(data);
-    }
-
-    // Create order
     await _firestore.collection('orders').add({
       'userId': uid,
-      'items': items,
+      'items': cartSnap.docs.map((doc) => doc.data()).toList(),
       'totalPrice': priceBreakdown['total'],
       'priceBreakdown': priceBreakdown,
       'shippingAddress': shippingAddress,
       'deliveryDate': Timestamp.fromDate(estimatedDelivery),
-      'orderStatus': 'Processing', // Can be 'Shipped', 'Out for Delivery'
+      'orderStatus': 'Processing',
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Clear cart batched
     final batch = _firestore.batch();
     for (var doc in cartSnap.docs) {
       batch.delete(doc.reference);
@@ -167,32 +158,16 @@ class FirebaseService {
     await batch.commit();
   }
 
-  // 4. Notifications Logic
-  Stream<QuerySnapshot> getNotificationsStream() {
-    final uid = currentUserUid;
-    if (uid == null) return const Stream.empty();
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('notifications')
-        .orderBy('timestamp', descending: true)
-        .snapshots();
-  }
-
-  // 5. Order History Logic
   Stream<QuerySnapshot> getOrderHistory() {
     final uid = currentUserUid;
     if (uid == null) return const Stream.empty();
-
-    // Removing orderBy to allow fetching without a composite index.
-    // We will handle the descending sort client-side in the OrderScreen.
     return _firestore
         .collection('orders')
         .where('userId', isEqualTo: uid)
         .snapshots();
   }
 
-  // 6. User Profile Logic
+  // 4. User Profile & Address Logic
   Future<DocumentSnapshot> getUserProfile() async {
     final uid = currentUserUid;
     if (uid == null) throw Exception("User not authenticated");
@@ -202,26 +177,45 @@ class FirebaseService {
   Stream<DocumentSnapshot> getUserProfileStream() {
     final uid = currentUserUid;
     if (uid == null) return const Stream.empty();
-    return _firestore.collection('users').doc(uid).snapshots();
+    
+    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
+      if (!snapshot.exists) {
+        _firestore.collection('users').doc(uid).set({
+          'name': 'FitKarma User',
+          'phone': '',
+          'email': _auth.currentUser?.email ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+          'styleProfile': {}, 
+        }, SetOptions(merge: true));
+      }
+      return snapshot;
+    });
   }
 
-  Future<void> updateProfile({
-    required String name,
-    required String phone,
-  }) async {
+  Future<void> updateProfile({required String name, required String phone}) async {
     final uid = currentUserUid;
     if (uid == null) return;
-    await _firestore.collection('users').doc(uid).set({
-      'name': name,
-      'phone': phone,
-    }, SetOptions(merge: true));
+    await _firestore.collection('users').doc(uid).set({'name': name, 'phone': phone}, SetOptions(merge: true));
   }
 
   Future<void> updateUserAddress(Map<String, dynamic> address) async {
     final uid = currentUserUid;
     if (uid == null) return;
+    await _firestore.collection('users').doc(uid).set({'shippingAddress': address}, SetOptions(merge: true));
+  }
+
+  // 5. AI Style Quiz Logic
+  Future<void> saveStyleProfile({required String gender, required String vibe, required List<String> colors}) async {
+    final uid = currentUserUid;
+    if (uid == null) throw Exception("User not authenticated");
+
     await _firestore.collection('users').doc(uid).set({
-      'shippingAddress': address,
+      'styleProfile': {
+        'preferredGender': gender,
+        'signatureVibe': vibe,
+        'favoriteColors': colors,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }
     }, SetOptions(merge: true));
   }
 }

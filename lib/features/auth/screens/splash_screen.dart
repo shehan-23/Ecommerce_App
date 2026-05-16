@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../auth_gate.dart'; // Adjust path based on your lib folder structure
+import 'package:google_fonts/google_fonts.dart';
+import '../../../auth_gate.dart'; 
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // After 3 seconds, move to AuthGate to check login status
+    // Navigate to AuthGate after animation completes
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -53,12 +54,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F0F14), 
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFF5F6D), Color(0xFFFF8A65)],
+            colors: [Color(0xFF0F0F14), Color(0xFF1E1E26)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -80,38 +82,34 @@ class _SplashScreenState extends State<SplashScreen>
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white, // Match white circle from login
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.shopping_bag_outlined,
+                  Icons.shopping_bag_outlined, // Match icon from login
                   size: 40,
-                  color: Colors.orange,
+                  color: Color(0xFFFF4D6D), // FitKarma primary coral color
                 ),
               ),
             ),
             const SizedBox(height: 30),
-            const Text(
-              "FASHION",
-              style: TextStyle(
+            Text(
+              "FITKARMA",
+              style: GoogleFonts.syne(
                 color: Colors.white,
-                fontSize: 22,
-                letterSpacing: 3,
-              ),
-            ),
-            const Text(
-              "STORE",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                letterSpacing: 4,
               ),
             ),
-            const SizedBox(height: 80),
-            const Text(
-              "Style Meets Simplicity",
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+            const SizedBox(height: 10),
+            Text(
+              "Fit Better. Feel Different.",
+              style: GoogleFonts.dmSans(
+                color: Colors.white54,
+                fontSize: 14,
+                letterSpacing: 1,
+              ),
             ),
           ],
         ),

@@ -105,13 +105,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
             ),
             itemCount: products.length,
             itemBuilder: (context, index) {
-              final product = products[index];
+              // ✨ FIX: Pass the entire product object to match the new constructor ✨
               return GlassProductCard(
-                productId: product.id,
-                name: product.name,
-                price: product.price,
-                imageUrl: product.imageUrl,
-                category: product.category,
+                product: products[index],
               );
             },
           );

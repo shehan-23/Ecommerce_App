@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/firebase_service.dart';
+import '../../../features/auth/screens/style_quiz_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -36,13 +38,13 @@ class ProfileScreen extends StatelessWidget {
               TextField(
                 controller: nameController,
                 style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: "Name",
-                  labelStyle: const TextStyle(color: Colors.white54),
-                  enabledBorder: const UnderlineInputBorder(
+                  labelStyle: TextStyle(color: Colors.white54),
+                  enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.white24),
                   ),
-                  focusedBorder: const UnderlineInputBorder(
+                  focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFFF4D6D)),
                   ),
                 ),
@@ -51,13 +53,13 @@ class ProfileScreen extends StatelessWidget {
               TextField(
                 controller: phoneController,
                 style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: "Phone",
-                  labelStyle: const TextStyle(color: Colors.white54),
-                  enabledBorder: const UnderlineInputBorder(
+                  labelStyle: TextStyle(color: Colors.white54),
+                  enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.white24),
                   ),
-                  focusedBorder: const UnderlineInputBorder(
+                  focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFFF4D6D)),
                   ),
                 ),
@@ -110,32 +112,49 @@ class ProfileScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.white54),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: firebaseService.getUserProfileStream(),
         builder: (context, snapshot) {
+          // 1. Handle actual connection waiting state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFFFF4D6D)),
             );
           }
-          if (snapshot.hasError ||
-              !snapshot.hasData ||
-              !snapshot.data!.exists) {
+
+          // 2. Handle errors
+          if (snapshot.hasError) {
             return const Center(
-              child: Text(
-                "Error fetching profile",
-                style: TextStyle(color: Colors.white),
+              child: Text("Error loading profile", style: TextStyle(color: Colors.white)),
+            );
+          }
+
+          // 3. Handle initialization state where doc doesn't exist yet
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFFFF4D6D)),
+                  SizedBox(height: 16),
+                  Text("Setting up your profile...", style: TextStyle(color: Colors.white54)),
+                ],
               ),
             );
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-          final name = userData['name'] ?? 'Add your name';
-          final email =
-              userData['email'] ??
-              firebaseService.currentUserUid ??
-              'Add email';
+          final name = userData['name'] ?? 'FitKarma User';
+          final email = userData['email'] ?? FirebaseAuth.instance.currentUser?.email ?? 'No email';
           final phone = userData['phone'] ?? 'Add your phone';
 
           return ListView(
@@ -186,6 +205,35 @@ class ProfileScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF4D6D).withOpacity(0.1),
+                  foregroundColor: const Color(0xFFFF4D6D),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    side: const BorderSide(color: Color(0xFFFF4D6D), width: 1.5),
+                  ),
+                ),
+                icon: const Icon(Icons.auto_awesome, size: 24),
+                label: Text(
+                  "Update AI Style Profile",
+                  style: GoogleFonts.syne(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StyleQuizScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           );

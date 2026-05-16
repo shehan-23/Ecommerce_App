@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../services/firebase_service.dart';
 import '../../../models/address_model.dart';
 import '../../navigation/main_wrapper.dart';
-import 'payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final double subtotal;
@@ -66,7 +64,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   DateTime _calculateEstimatedDelivery() {
-    // Current date + 4 days (average between 3 and 5)
     return DateTime.now().add(const Duration(days: 4));
   }
 
@@ -83,10 +80,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         zipCode: _zipController.text.trim(),
       );
 
-      // Save user address for future
+      // Save user address
       await _firebaseService.updateUserAddress(address.toMap());
 
-      // Prepare breakdown and checkout
+      // Prepare breakdown
       final priceBreakdown = {
         'subtotal': widget.subtotal,
         'shippingFee': shippingFee,
@@ -94,6 +91,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'total': totalAmount,
       };
 
+      // Execute Checkout
       await _firebaseService.checkout(
         shippingAddress: address.toMap(),
         priceBreakdown: priceBreakdown,
@@ -103,10 +101,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              "Payment Successful! Order placed.",
-              style: GoogleFonts.dmSans(),
-            ),
+            content: Text("Payment Successful! Order placed.", style: GoogleFonts.dmSans()),
             backgroundColor: Colors.green,
           ),
         );
@@ -146,35 +141,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F14),
       appBar: AppBar(
-        title: Text(
-          'Checkout',
-          style: GoogleFonts.syne(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+        title: Text('Checkout', style: GoogleFonts.syne(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF4D6D)),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF4D6D)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Shipping Address Section
-                  Text(
-                    "Shipping Address",
-                    style: GoogleFonts.syne(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text("Shipping Address", style: GoogleFonts.syne(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 16),
                   Form(
                     key: _formKey,
@@ -193,94 +172,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  _stateController,
-                                  "State",
-                                ),
-                              ),
+                              Expanded(child: _buildTextField(_stateController, "State")),
                               const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  _zipController,
-                                  "Zip Code",
-                                  isNumber: true,
-                                ),
-                              ),
+                              Expanded(child: _buildTextField(_zipController, "Zip Code", isNumber: true)),
                             ],
                           ),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  // Delivery Estimate
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 15,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF4D6D).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: const Color(0xFFFF4D6D).withOpacity(0.3),
-                      ),
+                      border: Border.all(color: const Color(0xFFFF4D6D).withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.local_shipping_outlined,
-                          color: Color(0xFFFF4D6D),
-                        ),
+                        const Icon(Icons.local_shipping_outlined, color: Color(0xFFFF4D6D)),
                         const SizedBox(width: 15),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Estimated Delivery",
-                                style: GoogleFonts.dmSans(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                "Arriving by ${formatter.format(estimatedDelivery)}",
-                                style: GoogleFonts.syne(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
+                              Text("Estimated Delivery", style: GoogleFonts.dmSans(color: Colors.white70, fontSize: 13)),
+                              Text("Arriving by ${formatter.format(estimatedDelivery)}", style: GoogleFonts.syne(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  // Order Summary Section
-                  Text(
-                    "Order Summary",
-                    style: GoogleFonts.syne(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text("Order Summary", style: GoogleFonts.syne(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors
-                          .white, // Clean white-themed card for readability
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                     child: Column(
                       children: [
                         _buildSummaryRow("Subtotal", widget.subtotal),
@@ -288,68 +218,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         _buildSummaryRow("Shipping Fee", shippingFee),
                         const SizedBox(height: 8),
                         _buildSummaryRow("Estimated Tax", tax),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Divider(color: Colors.black12, thickness: 1),
-                        ),
+                        const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: Colors.black12, thickness: 1)),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "Total Amount",
-                              style: GoogleFonts.syne(
-                                color: Colors.black87,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "Rs. ${totalAmount.toStringAsFixed(2)}",
-                              style: GoogleFonts.syne(
-                                color: const Color(0xFFFF4D6D),
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            Text("Total Amount", style: GoogleFonts.syne(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text("Rs. ${totalAmount.toStringAsFixed(2)}", style: GoogleFonts.syne(color: const Color(0xFFFF4D6D), fontSize: 22, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
-                  // Action Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF4D6D),
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         elevation: 10,
                         shadowColor: const Color(0xFFFF4D6D).withOpacity(0.5),
                       ),
                       onPressed: _isProcessing ? null : _handleCheckout,
                       child: _isProcessing
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              "Pay Now",
-                              style: GoogleFonts.syne(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
+                          ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text("Pay Now", style: GoogleFonts.syne(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -359,26 +253,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    bool isNumber = false,
-  }) {
+  Widget _buildTextField(TextEditingController controller, String label, {bool isNumber = false}) {
     return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      validator: (value) =>
-          value == null || value.trim().isEmpty ? "Required" : null,
+      validator: (value) => value == null || value.trim().isEmpty ? "Required" : null,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white54),
-        enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white24),
-        ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFFFF4D6D)),
-        ),
+        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFFF4D6D))),
         errorStyle: const TextStyle(color: Colors.redAccent),
       ),
     );
@@ -388,18 +273,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(color: Colors.black54, fontSize: 15),
-        ),
-        Text(
-          "Rs. ${amount.toStringAsFixed(2)}",
-          style: GoogleFonts.dmSans(
-            color: Colors.black87,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text(label, style: GoogleFonts.dmSans(color: Colors.black54, fontSize: 15)),
+        Text("Rs. ${amount.toStringAsFixed(2)}", style: GoogleFonts.dmSans(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold)),
       ],
     );
   }
